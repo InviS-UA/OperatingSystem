@@ -32,7 +32,8 @@ bool DISK_Init(DISK* disk, uint8_t drive)
 
 bool DISK_Read(DISK* disk, uint64_t lba, uint16_t sectors, void* lowerDataOut)
 {
-    DISK_ExtansionDAP dap = {
+    DISK_ExtansionDAP dap =
+    {
         .size = 0x10,
         .useless = 0,
         .sectors = sectors,

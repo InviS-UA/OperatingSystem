@@ -1,8 +1,7 @@
 #include <stdint.h>
 #include "stdio.h"
 #include "disk.h"
-
-uint8_t* data = (uint8_t*)0x20000;
+#include "fat.h"
 
 void __attribute__((cdecl)) start(uint8_t bootDrive)
 {
@@ -16,16 +15,25 @@ void __attribute__((cdecl)) start(uint8_t bootDrive)
         goto end;
     }
 
-    if (!DISK_Read(&disk, 0, 1, data))
+    if (!FAT_Init(&disk))
     {
-        printf("Cannot read from disk!\n");
+        printf("Cannot init FAT!\n");
         goto end;
     }
 
-    for (int i = 0; i < 512; i++)
+    FATFile* fd = FAT_Open(&disk, "mydir/test.txt");
+    char buffer[100];
+    if (!FAT_Read(&disk, fd, sizeof(buffer), buffer))
     {
-        printf("%x", data[i]);
+        printf("Cannot read file!\n");
+        goto end;
     }
+    for (int i = 0; i < sizeof(buffer) && buffer[i] != '\0'; i++)
+        printf("%c", buffer[i]);
+    
+    printf("\n");
+
+    FAT_Close(fd);
 
 end:
     for(;;);
