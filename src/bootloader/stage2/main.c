@@ -3,6 +3,7 @@
 #include "disk.h"
 #include "fat.h"
 #include "memdefs.h"
+#include "memory.h"
 
 uint8_t* kernelLoadBuffer = (uint8_t*)MEMORY_LOAD_KERNEL;
 uint8_t* kernel = (uint8_t*)MEMORY_KERNEL_ADDR;
@@ -28,7 +29,7 @@ void __attribute__((cdecl)) start(uint8_t bootDrive)
     }
 
     // load kernel
-    FAT_File* fd = FAT_Open(&disk, "/kernel.sys");
+    FATFile* fd = FAT_Open(&disk, "/kernel.sys");
     uint32_t read;
     uint8_t* kBuffer = kernel;
     while ((read = FAT_Read(&disk, fd, MEMORY_LOAD_SIZE, kernelLoadBuffer)))
