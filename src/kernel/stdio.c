@@ -1,5 +1,5 @@
 #include "stdio.h"
-#include "x86.h"
+#include <arch/i686/io.h>
 
 #include <stdarg.h>
 #include <stdbool.h>
@@ -9,37 +9,37 @@ static const unsigned SCREEN_WIDTH = 80;
 static const unsigned SCREEN_HEIGHT = 25;
 static const uint8_t DEFAULT_COLOR = 0x07;
 
-static uint8_t* g_ScreenBuffer = (uint8_t*)0xB8000;
-static int g_ScreenX = 0, g_ScreenY = 0;
+static uint8_t* screenBuffer = (uint8_t*)0xB8000;
+static int screenX = 0, screenY = 0;
 
 void putchr(int x, int y, char c)
 {
-    g_ScreenBuffer[2 * (y * SCREEN_WIDTH + x)] = c;
+    screenBuffer[2 * (y * SCREEN_WIDTH + x)] = c;
 }
 
 void putcolor(int x, int y, uint8_t color)
 {
-    g_ScreenBuffer[2 * (y * SCREEN_WIDTH + x) + 1] = color;
+    screenBuffer[2 * (y * SCREEN_WIDTH + x) + 1] = color;
 }
 
 char getchr(int x, int y)
 {
-    return g_ScreenBuffer[2 * (y * SCREEN_WIDTH + x)];
+    return screenBuffer[2 * (y * SCREEN_WIDTH + x)];
 }
 
 uint8_t getcolor(int x, int y)
 {
-    return g_ScreenBuffer[2 * (y * SCREEN_WIDTH + x) + 1];
+    return screenBuffer[2 * (y * SCREEN_WIDTH + x) + 1];
 }
 
 void setcursor(int x, int y)
 {
     int pos = y * SCREEN_WIDTH + x;
 
-    x86_outb(0x3D4, 0x0F);
-    x86_outb(0x3D5, (uint8_t)(pos & 0xFF));
-    x86_outb(0x3D4, 0x0E);
-    x86_outb(0x3D5, (uint8_t)((pos >> 8) & 0xFF));
+    i686_outb(0x3D4, 0x0F);
+    i686_outb(0x3D5, (uint8_t)(pos & 0xFF));
+    i686_outb(0x3D4, 0x0E);
+    i686_outb(0x3D5, (uint8_t)((pos >> 8) & 0xFF));
 }
 
 void clrscr()
@@ -51,9 +51,9 @@ void clrscr()
             putcolor(x, y, DEFAULT_COLOR);
         }
 
-    g_ScreenX = 0;
-    g_ScreenY = 0;
-    setcursor(g_ScreenX, g_ScreenY);
+    screenX = 0;
+    screenY = 0;
+    setcursor(screenX, screenY);
 }
 
 void scrollback(int lines)
@@ -72,7 +72,7 @@ void scrollback(int lines)
             putcolor(x, y, DEFAULT_COLOR);
         }
 
-    g_ScreenY -= lines;
+    screenY -= lines;
 }
 
 void putc(char c)
@@ -80,32 +80,32 @@ void putc(char c)
     switch (c)
     {
     case '\n':
-        g_ScreenX = 0;
-        g_ScreenY++;
+        screenX = 0;
+        screenY++;
         break;
     case '\t':
         for (int i = 0; i < 4; i++)
             putc(' ');
         break;
     case '\r':
-        g_ScreenX = 0;
+        screenX = 0;
         break;
     default:
-        putchr(g_ScreenX, g_ScreenY, c);
-        putcolor(g_ScreenX, g_ScreenY, DEFAULT_COLOR);
-        g_ScreenX++;
+        putchr(screenX, screenY, c);
+        putcolor(screenX, screenY, DEFAULT_COLOR);
+        screenX++;
         break;
     }
 
-    if (g_ScreenX >= SCREEN_WIDTH)
+    if (screenX >= SCREEN_WIDTH)
     {
-        g_ScreenY++;
-        g_ScreenX = 0;
+        screenY++;
+        screenX = 0;
     }
-    if (g_ScreenY >= SCREEN_HEIGHT)
+    if (screenY >= SCREEN_HEIGHT)
         scrollback(1);
 
-    setcursor(g_ScreenX, g_ScreenY);
+    setcursor(screenX, screenY);
 }
 
 void puts(const char* str)
